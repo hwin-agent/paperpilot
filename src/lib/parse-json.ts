@@ -1,6 +1,7 @@
 /**
  * Robustly parse JSON from an LLM response.
- * Handles markdown fences, trailing commas, and other common LLM quirks.
+ * Handles markdown fences, trailing commas, unescaped newlines in strings,
+ * and other common LLM quirks.
  */
 export function parseJsonFromLLM<T>(raw: string): T {
   // Try direct parse first
@@ -11,7 +12,10 @@ export function parseJsonFromLLM<T>(raw: string): T {
   }
 
   // Remove markdown code fences
-  let cleaned = raw.replace(/^```(?:json)?\s*\n?/gm, "").replace(/\n?```\s*$/gm, "").trim();
+  let cleaned = raw
+    .replace(/^```(?:json)?\s*\n?/gm, "")
+    .replace(/\n?```\s*$/gm, "")
+    .trim();
 
   // Try again
   try {
@@ -30,7 +34,10 @@ export function parseJsonFromLLM<T>(raw: string): T {
     throw new Error("No JSON object or array found in response");
   }
 
-  if (firstBracket === -1 || (firstBrace !== -1 && firstBrace < firstBracket)) {
+  if (
+    firstBracket === -1 ||
+    (firstBrace !== -1 && firstBrace < firstBracket)
+  ) {
     start = firstBrace;
     endChar = "}";
   } else {
@@ -50,9 +57,82 @@ export function parseJsonFromLLM<T>(raw: string): T {
 
   try {
     return JSON.parse(cleaned);
+  } catch {
+    // Continue with more aggressive fixes
+  }
+
+  // Fix unescaped newlines inside JSON string values
+  // Replace literal newlines inside strings with \\n
+  cleaned = fixNewlinesInJsonStrings(cleaned);
+
+  // Remove trailing commas again after fix
+  cleaned = cleaned.replace(/,\s*([}\]])/g, "$1");
+
+  try {
+    return JSON.parse(cleaned);
   } catch (e) {
+    // Last resort: try to extract individual file objects with regex
+    console.error(
+      "[parseJsonFromLLM] Final parse failed:",
+      e instanceof Error ? e.message : String(e)
+    );
+    console.error(
+      "[parseJsonFromLLM] First 500 chars of cleaned:",
+      cleaned.slice(0, 500)
+    );
     throw new Error(
       `Failed to parse JSON from LLM response: ${e instanceof Error ? e.message : String(e)}`
     );
   }
+}
+
+/**
+ * Fix unescaped newlines inside JSON string values.
+ * LLMs often output multi-line strings without proper escaping.
+ */
+function fixNewlinesInJsonStrings(json: string): string {
+  let result = "";
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < json.length; i++) {
+    const ch = json[i];
+
+    if (escaped) {
+      result += ch;
+      escaped = false;
+      continue;
+    }
+
+    if (ch === "\\") {
+      result += ch;
+      escaped = true;
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = !inString;
+      result += ch;
+      continue;
+    }
+
+    if (inString && ch === "\n") {
+      result += "\\n";
+      continue;
+    }
+
+    if (inString && ch === "\r") {
+      result += "\\r";
+      continue;
+    }
+
+    if (inString && ch === "\t") {
+      result += "\\t";
+      continue;
+    }
+
+    result += ch;
+  }
+
+  return result;
 }

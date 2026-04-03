@@ -110,9 +110,8 @@ export async function fetchPaperText(arxivId: string): Promise<string> {
 
   const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer());
 
-  // Dynamic import for pdf-parse (server-only)
-  const pdfParseModule = await import("pdf-parse");
-  const pdfParse = (pdfParseModule as any).default ?? pdfParseModule;
+  // Dynamic import for pdf-parse v1 (server-only)
+  const pdfParse = (await import("pdf-parse")).default as (buf: Buffer) => Promise<{ text: string; numpages: number }>;
   const parsed = await pdfParse(pdfBuffer);
 
   return parsed.text.slice(0, 150000); // Limit context
