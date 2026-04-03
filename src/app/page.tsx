@@ -158,7 +158,16 @@ export default function LandingPage() {
           className="text-[#9B9498]"
           style={{ fontFamily: "var(--font-sans)", fontSize: "0.85rem" }}
         >
-          Built for the GLM 5.1 Challenge · Powered by{" "}
+          Built for the{" "}
+          <a
+            href="https://build-with-glm-5-1-challenge.devpost.com/"
+            target="_blank"
+            rel="noopener"
+            className="text-[#C8432B] underline hover:text-[#A83520]"
+          >
+            GLM 5.1 Challenge
+          </a>{" "}
+          · Powered by{" "}
           <a
             href="https://z.ai"
             target="_blank"
@@ -166,6 +175,19 @@ export default function LandingPage() {
             className="text-[#C8432B] underline hover:text-[#A83520]"
           >
             Z.ai
+          </a>
+        </p>
+        <p
+          className="mt-2 text-[#D5CEC5]"
+          style={{ fontFamily: "var(--font-sans)", fontSize: "0.75rem" }}
+        >
+          <a
+            href="https://github.com/hwin-agent/paperpilot"
+            target="_blank"
+            rel="noopener"
+            className="text-[#9B9498] hover:text-[#6B6570] transition-colors"
+          >
+            GitHub
           </a>
         </p>
       </footer>

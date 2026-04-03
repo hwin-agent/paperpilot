@@ -9,19 +9,16 @@ interface Props {
 
 export function OutputPackage({ files, paperTitle }: Props) {
   const handleDownload = () => {
-    // Create a simple concatenated text file for download
-    // (In production this would be a zip)
-    const content = files
-      .map((f) => `${"=".repeat(60)}\n${f.filename}\n${"=".repeat(60)}\n\n${f.content}`)
-      .join("\n\n\n");
-
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "paperpilot-output.txt";
-    a.click();
-    URL.revokeObjectURL(url);
+    // Download each file individually
+    for (const file of files) {
+      const blob = new Blob([file.content], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = file.filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
   return (
