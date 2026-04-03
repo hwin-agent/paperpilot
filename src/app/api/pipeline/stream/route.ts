@@ -84,9 +84,12 @@ export async function POST(req: NextRequest) {
     return new Response("arxivUrl is required", { status: 400 });
   }
 
-  if (!process.env.GLM_API_KEY || process.env.GLM_API_KEY === "07cc****") {
+  if (
+    !process.env.GLM_API_KEY &&
+    !process.env.OPENAI_API_KEY
+  ) {
     return new Response(
-      JSON.stringify({ error: "GLM API key not configured" }),
+      JSON.stringify({ error: "No LLM API key configured" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
