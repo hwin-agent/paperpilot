@@ -33,7 +33,7 @@ export async function fetchPaperMetadata(
       headers: { "User-Agent": "PaperPilot/1.0 (hackathon project)" },
     });
     if (response.ok) break;
-    if (response.status === 429 && attempt < 2) {
+    if ((response.status === 429 || response.status === 503) && attempt < 2) {
       await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
       continue;
     }
@@ -99,13 +99,22 @@ export async function fetchPaperText(arxivId: string): Promise<string> {
     // Fall through to PDF
   }
 
-  // Fallback: download PDF and parse
+  // Fallback: download PDF and parse (with retry for 503)
   const pdfUrl = `https://arxiv.org/pdf/${arxivId}`;
-  const pdfResponse = await fetch(pdfUrl, {
-    headers: { "User-Agent": "PaperPilot/1.0 (hackathon project)" },
-  });
-  if (!pdfResponse.ok) {
+  let pdfResponse: Response | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    pdfResponse = await fetch(pdfUrl, {
+      headers: { "User-Agent": "PaperPilot/1.0 (hackathon project)" },
+    });
+    if (pdfResponse.ok) break;
+    if ((pdfResponse.status === 429 || pdfResponse.status === 503) && attempt < 2) {
+      await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+      continue;
+    }
     throw new Error(`Failed to download PDF: ${pdfResponse.status}`);
+  }
+  if (!pdfResponse || !pdfResponse.ok) {
+    throw new Error("PDF download failed after retries");
   }
 
   const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer());
