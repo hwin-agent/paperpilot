@@ -38,6 +38,7 @@ export default function PipelinePage() {
   const abortRef = useRef<AbortController | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (isRunning) {
@@ -52,6 +53,13 @@ export default function PipelinePage() {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isRunning]);
+
+  // Auto-scroll to bottom when new content appears
+  useEffect(() => {
+    if (isRunning || currentStage === "complete") {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [extraction, plan, files, validation, currentStage, isRunning, statusMessage]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -427,38 +435,41 @@ export default function PipelinePage() {
 
         {/* Extraction Panel */}
         {extraction && (
-          <div className="mt-6">
+          <div className="mt-6 animate-fade-in">
             <ExtractionPanel extraction={extraction} />
           </div>
         )}
 
         {/* Plan Panel */}
         {plan && (
-          <div className="mt-6">
+          <div className="mt-6 animate-fade-in">
             <PlanPanel plan={plan} />
           </div>
         )}
 
         {/* Code Viewer */}
         {files.length > 0 && (
-          <div className="mt-6">
+          <div className="mt-6 animate-fade-in">
             <CodeViewer files={files} />
           </div>
         )}
 
         {/* Validation Table */}
         {validation.length > 0 && (
-          <div className="mt-6">
+          <div className="mt-6 animate-fade-in">
             <ValidationTable results={validation} />
           </div>
         )}
 
         {/* Output Package (when complete) */}
         {currentStage === "complete" && files.length > 0 && (
-          <div className="mt-6">
+          <div className="mt-6 animate-fade-in">
             <OutputPackage files={files} paperTitle={paperTitle} />
           </div>
         )}
+
+        {/* Scroll anchor */}
+        <div ref={bottomRef} className="h-8" />
       </div>
     </main>
   );

@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "PaperPilot — arXiv Paper → Working Code",
   description:
     "Paste a research paper URL. Get a validated, documented implementation in minutes. Powered by GLM 5.1.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
