@@ -241,8 +241,17 @@ Requirements:
 
   let files: GeneratedFile[];
   try {
-    files = parseJsonFromLLM<GeneratedFile[]>(codeRaw);
-  } catch {
+    const parsed = parseJsonFromLLM<GeneratedFile[] | Record<string, unknown>>(codeRaw);
+    // Handle case where LLM returns an object with a files key
+    if (Array.isArray(parsed)) {
+      files = parsed;
+    } else if (parsed && typeof parsed === "object" && "files" in parsed && Array.isArray((parsed as any).files)) {
+      files = (parsed as any).files;
+    } else {
+      throw new Error("Response is not a file array");
+    }
+  } catch (e) {
+    console.error("[PaperPilot] Code generation parse error:", e);
     throw new Error("Failed to parse generated code from GLM response");
   }
   updateRun(runId, { files });
