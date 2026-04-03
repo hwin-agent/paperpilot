@@ -13,9 +13,9 @@ function getProvider() {
       provider: createOpenAICompatible({
         name: "glm",
         apiKey: process.env.GLM_API_KEY,
-        baseURL: "https://open.bigmodel.cn/api/paas/v4",
+        baseURL: "https://api.z.ai/api/coding/paas/v4",
       }),
-      modelId: "glm-4-plus",
+      modelId: "glm-5.1",
       name: "GLM 5.1",
     };
   }
