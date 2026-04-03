@@ -1,5 +1,6 @@
 import { callGLM } from "./glm";
 import { parseArxivId, fetchPaperMetadata, fetchPaperText } from "./arxiv";
+import { parseJsonFromLLM } from "./parse-json";
 import { createRun, updateRun, emitEvent } from "./store";
 import type {
   AlgorithmExtraction,
@@ -107,8 +108,7 @@ Be thorough — extract ALL key parameters, steps, reported results, and equatio
 
   let extraction: AlgorithmExtraction;
   try {
-    const cleaned = extractionRaw.replace(/```json\n?|\n?```/g, "").trim();
-    extraction = JSON.parse(cleaned);
+    extraction = parseJsonFromLLM<AlgorithmExtraction>(extractionRaw);
   } catch {
     throw new Error("Failed to parse algorithm extraction from GLM response");
   }
@@ -169,8 +169,7 @@ Include these files at minimum:
 
   let plan: ImplementationPlan;
   try {
-    const cleaned = planRaw.replace(/```json\n?|\n?```/g, "").trim();
-    plan = JSON.parse(cleaned);
+    plan = parseJsonFromLLM<ImplementationPlan>(planRaw);
   } catch {
     throw new Error("Failed to parse implementation plan from GLM response");
   }
@@ -249,8 +248,7 @@ Requirements:
 
   let files: GeneratedFile[];
   try {
-    const cleaned = codeRaw.replace(/```json\n?|\n?```/g, "").trim();
-    files = JSON.parse(cleaned);
+    files = parseJsonFromLLM<GeneratedFile[]>(codeRaw);
   } catch {
     throw new Error("Failed to parse generated code from GLM response");
   }
@@ -305,8 +303,7 @@ Be realistic — the implementation uses synthetic data so exact matches aren't 
 
   let validation: ValidationResult[];
   try {
-    const cleaned = validationRaw.replace(/```json\n?|\n?```/g, "").trim();
-    validation = JSON.parse(cleaned);
+    validation = parseJsonFromLLM<ValidationResult[]>(validationRaw);
   } catch {
     // Fallback: create validation from reported results
     validation = extraction.reportedResults.map((r) => ({
