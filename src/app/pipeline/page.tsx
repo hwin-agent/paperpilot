@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import type {
   PipelineEvent,
   PipelineStage,
@@ -36,6 +36,22 @@ export default function PipelinePage() {
   );
 
   const abortRef = useRef<AbortController | null>(null);
+  const [elapsed, setElapsed] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (isRunning) {
+      setElapsed(0);
+      timerRef.current = setInterval(() => {
+        setElapsed((prev) => prev + 1);
+      }, 1000);
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isRunning]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -259,6 +275,38 @@ export default function PipelinePage() {
           </button>
         </form>
 
+        {/* Example papers */}
+        {currentStage === "idle" && (
+          <div className="mt-3 flex items-center gap-2">
+            <span
+              className="text-[#9B9498]"
+              style={{ fontFamily: "var(--font-sans)", fontSize: "0.8rem" }}
+            >
+              Try an example:
+            </span>
+            {[
+              {
+                label: "K-Means++ Clustering",
+                url: "https://arxiv.org/abs/2301.10838",
+              },
+              {
+                label: "PageRank Algorithm",
+                url: "https://arxiv.org/abs/0805.3322",
+              },
+            ].map((ex) => (
+              <button
+                key={ex.label}
+                type="button"
+                onClick={() => setUrl(ex.url)}
+                className="text-[#C8432B] hover:text-[#A83520] underline transition-colors border-none bg-transparent cursor-pointer"
+                style={{ fontFamily: "var(--font-sans)", fontSize: "0.8rem" }}
+              >
+                {ex.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Pipeline Stages */}
         {currentStage !== "idle" && (
           <div className="mt-8">
@@ -271,27 +319,38 @@ export default function PipelinePage() {
 
         {/* Status Message */}
         {statusMessage && currentStage !== "idle" && (
-          <div className="mt-4 flex items-center gap-2">
-            {isRunning && (
-              <span
-                className="inline-block animate-pulse"
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {isRunning && (
+                <span
+                  className="inline-block animate-pulse"
+                  style={{
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    backgroundColor: "#C8432B",
+                  }}
+                />
+              )}
+              <p
                 style={{
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "50%",
-                  backgroundColor: "#C8432B",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "0.9rem",
+                  color: "#6B6570",
                 }}
-              />
-            )}
-            <p
+              >
+                {statusMessage}
+              </p>
+            </div>
+            <span
               style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: "0.9rem",
-                color: "#6B6570",
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.8rem",
+                color: "#9B9498",
               }}
             >
-              {statusMessage}
-            </p>
+              {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}
+            </span>
           </div>
         )}
 
