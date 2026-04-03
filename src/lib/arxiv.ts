@@ -27,9 +27,20 @@ export async function fetchPaperMetadata(
   arxivId: string
 ): Promise<PaperMetadata> {
   const apiUrl = `https://export.arxiv.org/api/query?id_list=${arxivId}`;
-  const response = await fetch(apiUrl);
-  if (!response.ok) {
+  let response: Response | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    response = await fetch(apiUrl, {
+      headers: { "User-Agent": "PaperPilot/1.0 (hackathon project)" },
+    });
+    if (response.ok) break;
+    if (response.status === 429 && attempt < 2) {
+      await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+      continue;
+    }
     throw new Error(`arXiv API returned ${response.status}`);
+  }
+  if (!response || !response.ok) {
+    throw new Error("arXiv API request failed after retries");
   }
 
   const xml = await response.text();
