@@ -14,6 +14,10 @@ import { v4 as uuid } from "uuid";
  * Emits SSE events at each stage for real-time UI updates.
  */
 export async function runPipeline(arxivUrl: string): Promise<string> {
+  if (!process.env.GLM_API_KEY || process.env.GLM_API_KEY === "07cc****") {
+    throw new Error("GLM API key not configured. Set GLM_API_KEY in environment.");
+  }
+
   const runId = uuid();
   createRun(runId, arxivUrl);
 

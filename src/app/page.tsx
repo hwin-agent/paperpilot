@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 
 const EXAMPLE_CODE = `def compute_centroids(X, labels, k):
@@ -32,60 +30,36 @@ const STAGES = [
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen" style={{ backgroundColor: "#FAF8F5" }}>
+    <main className="min-h-screen bg-[#FAF8F5]">
       {/* Hero */}
       <section className="flex flex-col items-center justify-center px-6 pt-32 pb-24">
         <h1
-          className="text-center leading-tight"
+          className="text-center leading-tight text-[#1A1A2E]"
           style={{
             fontFamily: "var(--font-serif)",
             fontSize: "clamp(2.5rem, 5vw, 4rem)",
-            color: "#1A1A2E",
             letterSpacing: "-0.02em",
           }}
         >
           arXiv Paper → Working Code
         </h1>
         <p
-          className="mt-6 text-center max-w-xl"
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "1.125rem",
-            color: "#6B6570",
-            lineHeight: "1.7",
-          }}
+          className="mt-6 text-center max-w-xl text-[#6B6570] leading-relaxed"
+          style={{ fontFamily: "var(--font-sans)", fontSize: "1.125rem" }}
         >
           Paste a research paper URL. Get a validated, documented implementation
           in minutes. Every function traces back to the paper.
         </p>
         <Link
           href="/pipeline"
-          className="mt-10 inline-flex items-center justify-center transition-colors"
-          style={{
-            backgroundColor: "#C8432B",
-            color: "#fff",
-            fontFamily: "var(--font-sans)",
-            fontWeight: 600,
-            fontSize: "1rem",
-            padding: "14px 32px",
-            borderRadius: "6px",
-          }}
-          onMouseOver={(e) =>
-            (e.currentTarget.style.backgroundColor = "#A83520")
-          }
-          onMouseOut={(e) =>
-            (e.currentTarget.style.backgroundColor = "#C8432B")
-          }
+          className="mt-10 inline-flex items-center justify-center rounded-[6px] bg-[#C8432B] text-white font-semibold px-8 py-3.5 hover:bg-[#A83520] transition-colors"
+          style={{ fontFamily: "var(--font-sans)", fontSize: "1rem" }}
         >
           Try PaperPilot
         </Link>
         <p
-          className="mt-4"
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "0.85rem",
-            color: "#9B9498",
-          }}
+          className="mt-4 text-[#9B9498]"
+          style={{ fontFamily: "var(--font-sans)", fontSize: "0.85rem" }}
         >
           Powered by GLM 5.1 · No signup required
         </p>
@@ -95,12 +69,8 @@ export default function LandingPage() {
       <section className="px-6 pb-20">
         <div className="max-w-3xl mx-auto">
           <h2
-            className="text-center mb-12"
-            style={{
-              fontFamily: "var(--font-serif)",
-              fontSize: "1.75rem",
-              color: "#1A1A2E",
-            }}
+            className="text-center mb-12 text-[#1A1A2E]"
+            style={{ fontFamily: "var(--font-serif)", fontSize: "1.75rem" }}
           >
             How It Works
           </h2>
@@ -109,38 +79,29 @@ export default function LandingPage() {
               <div key={stage.label} className="flex items-start flex-1">
                 <div className="flex flex-col items-center text-center flex-1">
                   <div
-                    className="flex items-center justify-center"
+                    className="flex items-center justify-center w-9 h-9 rounded-[6px] border border-[#D5CEC5] text-[#6B6570]"
                     style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "6px",
-                      border: "1px solid #D5CEC5",
                       fontFamily: "var(--font-mono)",
                       fontSize: "0.8rem",
-                      color: "#6B6570",
                     }}
                   >
                     {i + 1}
                   </div>
                   <p
-                    className="mt-3"
+                    className="mt-3 text-[#1A1A2E] uppercase tracking-wider"
                     style={{
                       fontFamily: "var(--font-sans)",
                       fontWeight: 600,
                       fontSize: "0.8rem",
-                      letterSpacing: "0.05em",
-                      textTransform: "uppercase",
-                      color: "#1A1A2E",
                     }}
                   >
                     {stage.label}
                   </p>
                   <p
-                    className="mt-1"
+                    className="mt-1 text-[#6B6570]"
                     style={{
                       fontFamily: "var(--font-sans)",
                       fontSize: "0.8rem",
-                      color: "#6B6570",
                       lineHeight: "1.4",
                     }}
                   >
@@ -148,14 +109,7 @@ export default function LandingPage() {
                   </p>
                 </div>
                 {i < STAGES.length - 1 && (
-                  <div
-                    className="mt-4 flex-shrink-0"
-                    style={{
-                      width: "24px",
-                      height: "1px",
-                      backgroundColor: "#D5CEC5",
-                    }}
-                  />
+                  <div className="mt-4 shrink-0 w-6 h-px bg-[#D5CEC5]" />
                 )}
               </div>
             ))}
@@ -166,49 +120,32 @@ export default function LandingPage() {
       {/* Example Output */}
       <section className="px-6 pb-20">
         <div className="max-w-2xl mx-auto">
-          <div
-            className="overflow-hidden"
-            style={{ borderRadius: "6px", border: "1px solid #D5CEC5" }}
-          >
-            <div
-              className="px-4 py-2 flex items-center gap-2"
-              style={{
-                backgroundColor: "#2A2A3E",
-                borderBottom: "1px solid #383850",
-              }}
-            >
+          <div className="overflow-hidden rounded-[6px] border border-[#D5CEC5]">
+            <div className="px-4 py-2 flex items-center gap-2 bg-[#2A2A3E] border-b border-[#383850]">
               <span
+                className="text-[#CDD6F4] opacity-70"
                 style={{
                   fontFamily: "var(--font-mono)",
                   fontSize: "0.75rem",
-                  color: "#CDD6F4",
-                  opacity: 0.7,
                 }}
               >
                 algorithm.py
               </span>
             </div>
             <pre
-              className="p-5 overflow-x-auto"
+              className="p-5 overflow-x-auto bg-[#1E1E2E] text-[#CDD6F4]"
               style={{
-                backgroundColor: "#1E1E2E",
                 fontFamily: "var(--font-mono)",
                 fontSize: "0.8rem",
                 lineHeight: "1.7",
-                color: "#CDD6F4",
               }}
             >
               <code>{EXAMPLE_CODE}</code>
             </pre>
           </div>
           <p
-            className="mt-4 text-center"
-            style={{
-              fontFamily: "var(--font-serif)",
-              fontSize: "1rem",
-              color: "#6B6570",
-              fontStyle: "italic",
-            }}
+            className="mt-4 text-center text-[#6B6570] italic"
+            style={{ fontFamily: "var(--font-serif)", fontSize: "1rem" }}
           >
             Every function traces back to the paper.
           </p>
@@ -216,23 +153,17 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer
-        className="px-6 py-10 text-center"
-        style={{ borderTop: "1px solid #D5CEC5" }}
-      >
+      <footer className="px-6 py-10 text-center border-t border-[#D5CEC5]">
         <p
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "0.85rem",
-            color: "#9B9498",
-          }}
+          className="text-[#9B9498]"
+          style={{ fontFamily: "var(--font-sans)", fontSize: "0.85rem" }}
         >
           Built for the GLM 5.1 Challenge · Powered by{" "}
           <a
             href="https://z.ai"
             target="_blank"
             rel="noopener"
-            style={{ color: "#C8432B", textDecoration: "underline" }}
+            className="text-[#C8432B] underline hover:text-[#A83520]"
           >
             Z.ai
           </a>
