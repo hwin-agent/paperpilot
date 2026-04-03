@@ -293,6 +293,10 @@ export default function PipelinePage() {
             </span>
             {[
               {
+                label: "Attention Is All You Need",
+                url: "https://arxiv.org/abs/1706.03762",
+              },
+              {
                 label: "K-Means++ Clustering",
                 url: "https://arxiv.org/abs/2301.10838",
               },
@@ -371,15 +375,39 @@ export default function PipelinePage() {
               borderRadius: "6px",
             }}
           >
-            <p
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: "0.9rem",
-                color: "#991B1B",
-              }}
-            >
-              {error}
-            </p>
+            <div className="flex items-center justify-between">
+              <p
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "0.9rem",
+                  color: "#991B1B",
+                }}
+              >
+                {error}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setCurrentStage("idle");
+                  setIsRunning(false);
+                }}
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "0.8rem",
+                  color: "#991B1B",
+                  background: "transparent",
+                  border: "1px solid #FECACA",
+                  borderRadius: "4px",
+                  padding: "4px 12px",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  marginLeft: "12px",
+                }}
+              >
+                Try Again
+              </button>
+            </div>
           </div>
         )}
 
@@ -465,6 +493,52 @@ export default function PipelinePage() {
         {currentStage === "complete" && files.length > 0 && (
           <div className="mt-6 animate-fade-in">
             <OutputPackage files={files} paperTitle={paperTitle} />
+          </div>
+        )}
+
+        {/* New Run button after completion */}
+        {currentStage === "complete" && (
+          <div className="mt-8 flex justify-center animate-fade-in">
+            <button
+              type="button"
+              onClick={() => {
+                setUrl("");
+                setCurrentStage("idle");
+                setStatusMessage("");
+                setError(null);
+                setPaperTitle("");
+                setPaperAuthors([]);
+                setPaperAbstract("");
+                setExtraction(null);
+                setPlan(null);
+                setFiles([]);
+                setValidation([]);
+                setCompletedStages(new Set());
+                setElapsed(0);
+              }}
+              className="transition-colors"
+              style={{
+                backgroundColor: "transparent",
+                color: "#C8432B",
+                fontFamily: "var(--font-sans)",
+                fontWeight: 600,
+                fontSize: "0.95rem",
+                padding: "12px 28px",
+                borderRadius: "6px",
+                border: "1px solid #C8432B",
+                cursor: "pointer",
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = "#C8432B";
+                e.currentTarget.style.color = "#fff";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "#C8432B";
+              }}
+            >
+              Try Another Paper
+            </button>
           </div>
         )}
 
