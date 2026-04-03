@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runPipeline } from "@/lib/pipeline";
+import { parseArxivId } from "@/lib/arxiv";
 
+/**
+ * Simple validation endpoint — the actual pipeline runs via POST /api/pipeline/stream.
+ * Kept for backward compatibility and URL validation.
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -13,9 +17,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const runId = await runPipeline(arxivUrl);
+    const arxivId = parseArxivId(arxivUrl);
+    if (!arxivId) {
+      return NextResponse.json(
+        { error: "Invalid arXiv URL" },
+        { status: 400 }
+      );
+    }
 
-    return NextResponse.json({ runId });
+    return NextResponse.json({ valid: true, arxivId });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unknown error" },

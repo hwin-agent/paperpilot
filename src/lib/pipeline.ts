@@ -8,33 +8,26 @@ import type {
   GeneratedFile,
   ValidationResult,
 } from "./types";
-import { v4 as uuid } from "uuid";
+// uuid moved to stream route
 
 /**
- * Run the full paper-to-code pipeline.
+ * Execute the full paper-to-code pipeline.
  * Emits SSE events at each stage for real-time UI updates.
+ * Runs within the streaming endpoint to keep the serverless function alive.
  */
-export async function runPipeline(arxivUrl: string): Promise<string> {
-  if (!process.env.GLM_API_KEY || process.env.GLM_API_KEY === "07cc****") {
-    throw new Error("GLM API key not configured. Set GLM_API_KEY in environment.");
-  }
-
-  const runId = uuid();
-  createRun(runId, arxivUrl);
-
-  // Run async — don't await, let it stream
-  executePipeline(runId, arxivUrl).catch((err) => {
+export async function executePipeline(runId: string, arxivUrl: string) {
+  try {
+    await _executePipeline(runId, arxivUrl);
+  } catch (err) {
     updateRun(runId, { status: "error", error: String(err) });
     emitEvent(runId, {
       stage: "error",
       message: err instanceof Error ? err.message : String(err),
     });
-  });
-
-  return runId;
+  }
 }
 
-async function executePipeline(runId: string, arxivUrl: string) {
+async function _executePipeline(runId: string, arxivUrl: string) {
   // ── Stage 1: Fetch Paper ──────────────────────────────────────
   emitEvent(runId, { stage: "fetching", message: "Parsing arXiv URL..." });
 

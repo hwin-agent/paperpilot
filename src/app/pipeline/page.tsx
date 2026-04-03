@@ -73,24 +73,23 @@ export default function PipelinePage() {
       setCompletedStages(new Set());
 
       try {
-        // Start pipeline
-        const res = await fetch("/api/pipeline/start", {
+        // Combined start + stream endpoint (keeps serverless function alive)
+        abortRef.current = new AbortController();
+        const eventSource = await fetch("/api/pipeline/stream", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ arxivUrl: url.trim() }),
+          signal: abortRef.current.signal,
         });
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "Failed to start pipeline");
-        }
-        const { runId } = await res.json();
 
-        // Connect to SSE stream
-        abortRef.current = new AbortController();
-        const eventSource = await fetch(
-          `/api/pipeline/stream?runId=${runId}`,
-          { signal: abortRef.current.signal }
-        );
+        if (!eventSource.ok) {
+          let errMsg = "Failed to start pipeline";
+          try {
+            const data = await eventSource.json();
+            errMsg = data.error || errMsg;
+          } catch { /* ignore */ }
+          throw new Error(errMsg);
+        }
 
         if (!eventSource.body) {
           throw new Error("No stream body");
