@@ -367,6 +367,52 @@ export default function PipelinePage() {
           </div>
         )}
 
+        {/* Idle state — preview of pipeline stages */}
+        {currentStage === "idle" && (
+          <div className="mt-16 mb-8">
+            <div className="flex items-center justify-center gap-4">
+              {["Fetch", "Extract", "Plan", "Implement", "Validate"].map(
+                (label, i) => (
+                  <div key={label} className="flex items-center gap-4">
+                    <span
+                      style={{
+                        fontFamily: "var(--font-sans)",
+                        fontWeight: 600,
+                        fontSize: "0.7rem",
+                        letterSpacing: "0.05em",
+                        textTransform: "uppercase",
+                        color: "#D5CEC5",
+                      }}
+                    >
+                      {label}
+                    </span>
+                    {i < 4 && (
+                      <div
+                        style={{
+                          width: "24px",
+                          height: "1px",
+                          backgroundColor: "#E8E2DA",
+                        }}
+                      />
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+            <p
+              className="mt-6 text-center"
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontSize: "0.95rem",
+                color: "#D5CEC5",
+                fontStyle: "italic",
+              }}
+            >
+              Paste an arXiv URL to begin
+            </p>
+          </div>
+        )}
+
         {/* Pipeline Stages */}
         {currentStage !== "idle" && (
           <div className="mt-8 animate-fade-in">

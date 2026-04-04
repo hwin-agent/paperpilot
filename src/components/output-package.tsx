@@ -113,13 +113,13 @@ export function OutputPackage({ files, paperTitle }: Props) {
         {files.map((file, i) => (
           <div
             key={file.filename}
-            className="flex items-center gap-2 ml-4 animate-fade-in"
+            className="flex items-center gap-2 ml-4"
             style={{
               fontFamily: "var(--font-mono)",
               fontSize: "0.8rem",
               color: "#6B6570",
               padding: "3px 0",
-              animationDelay: `${i * 0.08}s`,
+              animation: `fadeInUp 0.4s ease-out ${i * 0.08}s both`,
             }}
           >
             <span style={{ color: "#D5CEC5" }}>

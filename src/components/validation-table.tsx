@@ -76,10 +76,9 @@ export function ValidationTable({ results }: Props) {
           {results.map((result, i) => (
             <tr
               key={result.metric}
-              className="animate-fade-in"
               style={{
                 backgroundColor: i % 2 === 0 ? "transparent" : "#FAF8F5",
-                animationDelay: `${i * 0.1}s`,
+                animation: `fadeInUp 0.4s ease-out ${i * 0.1}s both`,
               }}
             >
               <td
@@ -115,13 +114,13 @@ export function ValidationTable({ results }: Props) {
               </td>
               <td className="py-3">
                 <span
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 animate-pop"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1"
                   style={{
                     borderRadius: "4px",
                     fontFamily: "var(--font-sans)",
                     fontWeight: 600,
                     fontSize: "0.75rem",
-                    animationDelay: `${i * 0.15 + 0.2}s`,
+                    animation: `popIn 0.35s ease-out ${i * 0.15 + 0.2}s both`,
                     backgroundColor:
                       result.status === "match"
                         ? "#DCFCE7"
@@ -142,8 +141,6 @@ export function ValidationTable({ results }: Props) {
                       height="12"
                       viewBox="0 0 12 12"
                       fill="none"
-                      className="animate-check"
-                      style={{ animationDelay: `${i * 0.15 + 0.3}s` }}
                     >
                       <path
                         d="M2.5 6L5 8.5L9.5 3.5"
