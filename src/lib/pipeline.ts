@@ -11,6 +11,47 @@ import type {
 // uuid moved to stream route
 
 /**
+ * Call GLM and parse the response as JSON, with automatic retry on parse failure.
+ * Retries up to `retries` times with an increasingly explicit prompt reminder.
+ */
+async function callGLMWithJsonParse<T>(
+  systemPrompt: string,
+  userPrompt: string,
+  options: { maxTokens?: number; retries?: number } = {}
+): Promise<T> {
+  const maxRetries = options.retries ?? 2;
+  let lastError: Error | undefined;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const promptSuffix =
+      attempt > 0
+        ? "\n\nIMPORTANT: Your response MUST be ONLY valid JSON. No explanations, no markdown fences, no text before or after the JSON. Start your response with { or [ and end with } or ]."
+        : "";
+
+    const raw = await callGLM(
+      systemPrompt,
+      userPrompt + promptSuffix,
+      { maxTokens: options.maxTokens }
+    );
+
+    try {
+      return parseJsonFromLLM<T>(raw);
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      console.error(
+        `[PaperPilot] JSON parse attempt ${attempt + 1}/${maxRetries + 1} failed:`,
+        lastError.message
+      );
+      if (attempt < maxRetries) {
+        console.log(`[PaperPilot] Retrying GLM call...`);
+      }
+    }
+  }
+
+  throw lastError!;
+}
+
+/**
  * Execute the full paper-to-code pipeline.
  * Emits SSE events at each stage for real-time UI updates.
  * Runs within the streaming endpoint to keep the serverless function alive.
@@ -76,9 +117,11 @@ async function _executePipeline(runId: string, arxivUrl: string) {
     message: "Extracting algorithm, parameters, and results...",
   });
 
-  const extractionRaw = await callGLM(
-    `You are PaperPilot, an expert at reading academic papers and extracting their core algorithms for implementation. You respond ONLY with valid JSON, no markdown fences.`,
-    `Read this research paper and extract the core algorithm/method for implementation.
+  let extraction: AlgorithmExtraction;
+  try {
+    extraction = await callGLMWithJsonParse<AlgorithmExtraction>(
+      `You are PaperPilot, an expert at reading academic papers and extracting their core algorithms for implementation. You respond ONLY with valid JSON, no markdown fences.`,
+      `Read this research paper and extract the core algorithm/method for implementation.
 
 PAPER TEXT:
 ${paperText.slice(0, 80000)}
@@ -90,19 +133,16 @@ Extract and return ONLY a JSON object with this exact structure:
   "inputs": "Description of inputs",
   "outputs": "Description of outputs",
   "keyParameters": [{"name": "param_name", "description": "what it controls"}],
-  "coreSteps": ["Step 1 description", "Step 2 description", ...],
+  "coreSteps": ["Step 1 description", "Step 2 description"],
   "reportedResults": [{"metric": "Accuracy", "value": "94.5%"}],
   "keyEquations": [{"id": "Eq. 1", "description": "what it computes", "section": "Section 3.2"}]
 }
 
 Be thorough — extract ALL key parameters, steps, reported results, and equations. This will be used to generate a complete implementation.`,
-    { maxTokens: 4096 }
-  );
-
-  let extraction: AlgorithmExtraction;
-  try {
-    extraction = parseJsonFromLLM<AlgorithmExtraction>(extractionRaw);
-  } catch {
+      { maxTokens: 4096, retries: 2 }
+    );
+  } catch (err) {
+    console.error("[PaperPilot] Extraction parse error:", err);
     throw new Error("Failed to parse algorithm extraction from GLM response");
   }
   updateRun(runId, { extraction });
@@ -127,9 +167,11 @@ Be thorough — extract ALL key parameters, steps, reported results, and equatio
     message: "Designing implementation architecture...",
   });
 
-  const planRaw = await callGLM(
-    `You are PaperPilot, an expert software architect. You design clean Python implementations of research algorithms. You respond ONLY with valid JSON, no markdown fences.`,
-    `Design a Python implementation plan for this algorithm extracted from a research paper.
+  let plan: ImplementationPlan;
+  try {
+    plan = await callGLMWithJsonParse<ImplementationPlan>(
+      `You are PaperPilot, an expert software architect. You design clean Python implementations of research algorithms. You respond ONLY with valid JSON, no markdown fences.`,
+      `Design a Python implementation plan for this algorithm extracted from a research paper.
 
 ALGORITHM: ${extraction.algorithmName}
 DESCRIPTION: ${extraction.description}
@@ -157,13 +199,10 @@ Include these files at minimum:
 - algorithm.py (core implementation)
 - evaluate.py (validation harness that prints metrics matching the paper's reported results)
 - requirements.txt (dependencies)`,
-    { maxTokens: 4096 }
-  );
-
-  let plan: ImplementationPlan;
-  try {
-    plan = parseJsonFromLLM<ImplementationPlan>(planRaw);
-  } catch {
+      { maxTokens: 4096, retries: 2 }
+    );
+  } catch (err) {
+    console.error("[PaperPilot] Plan parse error:", err);
     throw new Error("Failed to parse implementation plan from GLM response");
   }
   updateRun(runId, { plan });
@@ -185,8 +224,10 @@ Include these files at minimum:
     message: "Writing implementation code...",
   });
 
-  const codeRaw = await callGLM(
-    `You are PaperPilot, an expert Python developer who implements research papers. You write clean, well-documented code.
+  let files: GeneratedFile[];
+  try {
+    const parsed = await callGLMWithJsonParse<GeneratedFile[] | Record<string, unknown>>(
+      `You are PaperPilot, an expert Python developer who implements research papers. You write clean, well-documented code.
 
 CRITICAL INSTRUCTION: Every function and class MUST include docstrings that reference specific sections, equations, and theorems from the paper. For example:
 """
@@ -198,7 +239,7 @@ See also: Convergence proof in Theorem 1, Section 4.
 This paper-referencing is the most important quality of your output. Every non-trivial function should trace back to the paper.
 
 You respond ONLY with valid JSON, no markdown fences.`,
-    `Write the complete Python implementation for this algorithm.
+      `Write the complete Python implementation for this algorithm.
 
 PAPER TITLE: ${metadata.title}
 ALGORITHM: ${extraction.algorithmName}
@@ -236,12 +277,8 @@ Requirements:
 4. evaluate.py should generate synthetic/sample data if needed and run the algorithm
 5. Include a README.md explaining the paper and how to use the implementation
 6. Code must be clean, modular, and production-quality`,
-    { maxTokens: 16384 }
-  );
-
-  let files: GeneratedFile[];
-  try {
-    const parsed = parseJsonFromLLM<GeneratedFile[] | Record<string, unknown>>(codeRaw);
+      { maxTokens: 16384, retries: 2 }
+    );
     // Handle case where LLM returns an object with a files key
     if (Array.isArray(parsed)) {
       files = parsed;
@@ -272,9 +309,11 @@ Requirements:
 
   // Use GLM to "mentally execute" the code and predict output
   // (Option C from architecture — avoids execution infrastructure)
-  const validationRaw = await callGLM(
-    `You are a Python expert. You can read code and predict its execution output accurately. You respond ONLY with valid JSON, no markdown fences.`,
-    `Analyze this Python implementation and predict the output of evaluate.py.
+  let validation: ValidationResult[];
+  try {
+    validation = await callGLMWithJsonParse<ValidationResult[]>(
+      `You are a Python expert. You can read code and predict its execution output accurately. You respond ONLY with valid JSON, no markdown fences.`,
+      `Analyze this Python implementation and predict the output of evaluate.py.
 
 FILES:
 ${files.map((f) => `--- ${f.filename} ---\n${f.content}`).join("\n\n")}
@@ -300,12 +339,8 @@ Rules for status:
 - "mismatch" if fundamentally different
 
 Be realistic — the implementation uses synthetic data so exact matches aren't expected. Focus on whether the algorithm is correctly implemented and produces reasonable results.`,
-    { maxTokens: 4096 }
-  );
-
-  let validation: ValidationResult[];
-  try {
-    validation = parseJsonFromLLM<ValidationResult[]>(validationRaw);
+      { maxTokens: 4096, retries: 1 }
+    );
   } catch {
     // Fallback: create validation from reported results
     validation = extraction.reportedResults.map((r) => ({
