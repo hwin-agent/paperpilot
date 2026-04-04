@@ -33,6 +33,7 @@ export function ValidationTable({ results }: Props) {
           Validation Results
         </h3>
         <span
+          className="animate-count"
           style={{
             fontFamily: "var(--font-sans)",
             fontSize: "0.85rem",
@@ -51,66 +52,34 @@ export function ValidationTable({ results }: Props) {
               borderBottom: "1px solid #D5CEC5",
             }}
           >
-            <th
-              className="text-left py-2 pr-4"
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontWeight: 600,
-                fontSize: "0.7rem",
-                letterSpacing: "0.05em",
-                textTransform: "uppercase",
-                color: "#9B9498",
-              }}
-            >
-              Metric
-            </th>
-            <th
-              className="text-left py-2 pr-4"
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontWeight: 600,
-                fontSize: "0.7rem",
-                letterSpacing: "0.05em",
-                textTransform: "uppercase",
-                color: "#9B9498",
-              }}
-            >
-              Paper Reports
-            </th>
-            <th
-              className="text-left py-2 pr-4"
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontWeight: 600,
-                fontSize: "0.7rem",
-                letterSpacing: "0.05em",
-                textTransform: "uppercase",
-                color: "#9B9498",
-              }}
-            >
-              PaperPilot Output
-            </th>
-            <th
-              className="text-left py-2"
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontWeight: 600,
-                fontSize: "0.7rem",
-                letterSpacing: "0.05em",
-                textTransform: "uppercase",
-                color: "#9B9498",
-              }}
-            >
-              Status
-            </th>
+            {["Metric", "Paper Reports", "PaperPilot Output", "Status"].map(
+              (h) => (
+                <th
+                  key={h}
+                  className="text-left py-2 pr-4"
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontWeight: 600,
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
+                    color: "#9B9498",
+                  }}
+                >
+                  {h}
+                </th>
+              )
+            )}
           </tr>
         </thead>
         <tbody>
           {results.map((result, i) => (
             <tr
               key={result.metric}
+              className="animate-fade-in"
               style={{
                 backgroundColor: i % 2 === 0 ? "transparent" : "#FAF8F5",
+                animationDelay: `${i * 0.1}s`,
               }}
             >
               <td
@@ -146,12 +115,13 @@ export function ValidationTable({ results }: Props) {
               </td>
               <td className="py-3">
                 <span
-                  className="inline-flex items-center gap-1 px-2 py-1"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 animate-pop"
                   style={{
                     borderRadius: "4px",
                     fontFamily: "var(--font-sans)",
                     fontWeight: 600,
                     fontSize: "0.75rem",
+                    animationDelay: `${i * 0.15 + 0.2}s`,
                     backgroundColor:
                       result.status === "match"
                         ? "#DCFCE7"
@@ -166,8 +136,26 @@ export function ValidationTable({ results }: Props) {
                           : "#991B1B",
                   }}
                 >
+                  {result.status === "match" && (
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      className="animate-check"
+                      style={{ animationDelay: `${i * 0.15 + 0.3}s` }}
+                    >
+                      <path
+                        d="M2.5 6L5 8.5L9.5 3.5"
+                        stroke="#166534"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  )}
                   {result.status === "match"
-                    ? "✓ Match"
+                    ? "Match"
                     : result.status === "partial"
                       ? "~ Partial"
                       : "✗ Mismatch"}
@@ -178,18 +166,23 @@ export function ValidationTable({ results }: Props) {
         </tbody>
       </table>
 
-      {matchCount === total && (
-        <p
-          className="mt-4 text-center"
-          style={{
-            fontFamily: "var(--font-serif)",
-            fontSize: "1rem",
-            color: "#2D6A4F",
-            fontStyle: "italic",
-          }}
+      {matchCount === total && total > 0 && (
+        <div
+          className="mt-5 pt-4 animate-fade-in"
+          style={{ borderTop: "1px solid #D5CEC5" }}
         >
-          Implementation validated — results within expected margin.
-        </p>
+          <p
+            className="text-center"
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: "1.05rem",
+              color: "#2D6A4F",
+              fontStyle: "italic",
+            }}
+          >
+            Implementation validated — results within expected margin.
+          </p>
+        </div>
       )}
     </div>
   );

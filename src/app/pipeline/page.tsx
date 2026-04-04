@@ -16,6 +16,21 @@ import { CodeViewer } from "@/components/code-viewer";
 import { ValidationTable } from "@/components/validation-table";
 import { OutputPackage } from "@/components/output-package";
 
+const EXAMPLE_PAPERS = [
+  {
+    label: "Attention Is All You Need",
+    url: "https://arxiv.org/abs/1706.03762",
+  },
+  {
+    label: "K-Means++ Clustering",
+    url: "https://arxiv.org/abs/2301.10838",
+  },
+  {
+    label: "PageRank Algorithm",
+    url: "https://arxiv.org/abs/0805.3322",
+  },
+];
+
 export default function PipelinePage() {
   const [url, setUrl] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -39,6 +54,7 @@ export default function PipelinePage() {
   const [elapsed, setElapsed] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (isRunning) {
@@ -59,7 +75,37 @@ export default function PipelinePage() {
     if (isRunning || currentStage === "complete") {
       bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }
-  }, [extraction, plan, files, validation, currentStage, isRunning, statusMessage]);
+  }, [
+    extraction,
+    plan,
+    files,
+    validation,
+    currentStage,
+    isRunning,
+    statusMessage,
+  ]);
+
+  // Focus input on mount
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const resetState = useCallback(() => {
+    setUrl("");
+    setCurrentStage("idle");
+    setStatusMessage("");
+    setError(null);
+    setPaperTitle("");
+    setPaperAuthors([]);
+    setPaperAbstract("");
+    setExtraction(null);
+    setPlan(null);
+    setFiles([]);
+    setValidation([]);
+    setCompletedStages(new Set());
+    setElapsed(0);
+    setIsRunning(false);
+  }, []);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -81,7 +127,6 @@ export default function PipelinePage() {
       setCompletedStages(new Set());
 
       try {
-        // Combined start + stream endpoint (keeps serverless function alive)
         abortRef.current = new AbortController();
         const eventSource = await fetch("/api/pipeline/stream", {
           method: "POST",
@@ -95,7 +140,9 @@ export default function PipelinePage() {
           try {
             const data = await eventSource.json();
             errMsg = data.error || errMsg;
-          } catch { /* ignore */ }
+          } catch {
+            /* ignore */
+          }
           throw new Error(errMsg);
         }
 
@@ -203,6 +250,9 @@ export default function PipelinePage() {
     [url, isRunning]
   );
 
+  const formatTime = (s: number) =>
+    `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+
   return (
     <main
       className="min-h-screen"
@@ -240,12 +290,13 @@ export default function PipelinePage() {
         {/* Input */}
         <form onSubmit={handleSubmit} className="flex gap-3">
           <input
+            ref={inputRef}
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Paste an arXiv URL… (e.g. https://arxiv.org/abs/2301.12345)"
             disabled={isRunning}
-            className="flex-1 transition-colors outline-none"
+            className="flex-1 outline-none"
             style={{
               backgroundColor: "#FFFFFF",
               border: "1px solid #D5CEC5",
@@ -254,18 +305,22 @@ export default function PipelinePage() {
               fontFamily: "var(--font-sans)",
               fontSize: "1rem",
               color: "#1A1A2E",
+              transition: "border-color 0.2s ease, box-shadow 0.2s ease",
             }}
-            onFocus={(e) =>
-              (e.currentTarget.style.borderColor = "#C8432B")
-            }
-            onBlur={(e) =>
-              (e.currentTarget.style.borderColor = "#D5CEC5")
-            }
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "#C8432B";
+              e.currentTarget.style.boxShadow =
+                "0 0 0 3px rgba(200, 67, 43, 0.08)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#D5CEC5";
+              e.currentTarget.style.boxShadow = "none";
+            }}
           />
           <button
             type="submit"
             disabled={isRunning || !url.trim()}
-            className="transition-colors flex-shrink-0"
+            className="flex-shrink-0"
             style={{
               backgroundColor: isRunning ? "#9B9498" : "#C8432B",
               color: "#fff",
@@ -276,41 +331,35 @@ export default function PipelinePage() {
               borderRadius: "6px",
               border: "none",
               cursor: isRunning ? "not-allowed" : "pointer",
+              transition:
+                "background-color 0.2s ease, transform 0.1s ease",
             }}
           >
-            {isRunning ? "Processing..." : "Implement"}
+            {isRunning ? "Processing…" : "Implement"}
           </button>
         </form>
 
         {/* Example papers */}
         {currentStage === "idle" && (
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex items-center gap-2 animate-fade-in">
             <span
               className="text-[#9B9498]"
               style={{ fontFamily: "var(--font-sans)", fontSize: "0.8rem" }}
             >
               Try an example:
             </span>
-            {[
-              {
-                label: "Attention Is All You Need",
-                url: "https://arxiv.org/abs/1706.03762",
-              },
-              {
-                label: "K-Means++ Clustering",
-                url: "https://arxiv.org/abs/2301.10838",
-              },
-              {
-                label: "PageRank Algorithm",
-                url: "https://arxiv.org/abs/0805.3322",
-              },
-            ].map((ex) => (
+            {EXAMPLE_PAPERS.map((ex) => (
               <button
                 key={ex.label}
                 type="button"
                 onClick={() => setUrl(ex.url)}
-                className="text-[#C8432B] hover:text-[#A83520] underline transition-colors border-none bg-transparent cursor-pointer"
-                style={{ fontFamily: "var(--font-sans)", fontSize: "0.8rem" }}
+                className="text-[#C8432B] hover:text-[#A83520] transition-colors border-none bg-transparent cursor-pointer"
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "0.8rem",
+                  textDecoration: "underline",
+                  textUnderlineOffset: "2px",
+                }}
               >
                 {ex.label}
               </button>
@@ -320,7 +369,7 @@ export default function PipelinePage() {
 
         {/* Pipeline Stages */}
         {currentStage !== "idle" && (
-          <div className="mt-8">
+          <div className="mt-8 animate-fade-in">
             <PipelineStages
               currentStage={currentStage}
               completedStages={completedStages}
@@ -331,78 +380,104 @@ export default function PipelinePage() {
         {/* Status Message */}
         {statusMessage && currentStage !== "idle" && (
           <div className="mt-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               {isRunning && (
                 <span
-                  className="inline-block animate-pulse"
+                  className="inline-block"
                   style={{
                     width: "8px",
                     height: "8px",
                     borderRadius: "50%",
                     backgroundColor: "#C8432B",
+                    animation: "pulseRing 2s ease-out infinite",
                   }}
                 />
+              )}
+              {currentStage === "complete" && (
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  className="animate-check"
+                >
+                  <path
+                    d="M3 7L6 10L11 4"
+                    stroke="#2D6A4F"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               )}
               <p
                 style={{
                   fontFamily: "var(--font-sans)",
                   fontSize: "0.9rem",
-                  color: "#6B6570",
+                  color:
+                    currentStage === "complete" ? "#2D6A4F" : "#6B6570",
+                  fontWeight: currentStage === "complete" ? 600 : 400,
+                  transition: "color 0.3s ease",
                 }}
               >
-                {statusMessage}
+                {currentStage === "complete"
+                  ? `Pipeline complete — ${formatTime(elapsed)}`
+                  : statusMessage}
               </p>
             </div>
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "0.8rem",
-                color: "#9B9498",
-              }}
-            >
-              {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}
-            </span>
+            {isRunning && (
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.8rem",
+                  color: "#9B9498",
+                }}
+              >
+                {formatTime(elapsed)}
+              </span>
+            )}
           </div>
         )}
 
         {/* Error */}
         {error && (
           <div
-            className="mt-6 p-4"
+            className="mt-6 p-4 animate-fade-in"
             style={{
               backgroundColor: "#FEF2F2",
               border: "1px solid #FECACA",
               borderRadius: "6px",
             }}
           >
-            <div className="flex items-center justify-between">
-              <p
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: "0.9rem",
-                  color: "#991B1B",
-                }}
-              >
-                {error}
-              </p>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span style={{ color: "#991B1B", fontSize: "1rem" }}>
+                  ⚠
+                </span>
+                <p
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: "0.9rem",
+                    color: "#991B1B",
+                  }}
+                >
+                  {error}
+                </p>
+              </div>
               <button
                 type="button"
-                onClick={() => {
-                  setError(null);
-                  setCurrentStage("idle");
-                  setIsRunning(false);
-                }}
+                onClick={resetState}
                 style={{
                   fontFamily: "var(--font-sans)",
+                  fontWeight: 600,
                   fontSize: "0.8rem",
                   color: "#991B1B",
                   background: "transparent",
                   border: "1px solid #FECACA",
                   borderRadius: "4px",
-                  padding: "4px 12px",
+                  padding: "6px 14px",
                   cursor: "pointer",
                   flexShrink: 0,
-                  marginLeft: "12px",
                 }}
               >
                 Try Again
@@ -414,13 +489,26 @@ export default function PipelinePage() {
         {/* Paper Info */}
         {paperTitle && (
           <div
-            className="mt-6 p-6"
+            className="mt-6 p-6 animate-fade-in"
             style={{
               backgroundColor: "#F2EDE7",
               border: "1px solid #D5CEC5",
               borderRadius: "6px",
             }}
           >
+            <p
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontWeight: 600,
+                fontSize: "0.7rem",
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                color: "#9B9498",
+                marginBottom: "8px",
+              }}
+            >
+              Paper
+            </p>
             <h3
               style={{
                 fontFamily: "var(--font-serif)",
@@ -454,7 +542,7 @@ export default function PipelinePage() {
                 }}
               >
                 {paperAbstract.length > 300
-                  ? paperAbstract.slice(0, 300) + "..."
+                  ? paperAbstract.slice(0, 300) + "…"
                   : paperAbstract}
               </p>
             )}
@@ -463,60 +551,45 @@ export default function PipelinePage() {
 
         {/* Extraction Panel */}
         {extraction && (
-          <div className="mt-6 animate-fade-in">
+          <div className="mt-6 panel-enter">
             <ExtractionPanel extraction={extraction} />
           </div>
         )}
 
         {/* Plan Panel */}
         {plan && (
-          <div className="mt-6 animate-fade-in">
+          <div className="mt-6 panel-enter">
             <PlanPanel plan={plan} />
           </div>
         )}
 
         {/* Code Viewer */}
         {files.length > 0 && (
-          <div className="mt-6 animate-fade-in">
+          <div className="mt-6 panel-enter">
             <CodeViewer files={files} />
           </div>
         )}
 
         {/* Validation Table */}
         {validation.length > 0 && (
-          <div className="mt-6 animate-fade-in">
+          <div className="mt-6 panel-enter">
             <ValidationTable results={validation} />
           </div>
         )}
 
         {/* Output Package (when complete) */}
         {currentStage === "complete" && files.length > 0 && (
-          <div className="mt-6 animate-fade-in">
+          <div className="mt-6 panel-enter">
             <OutputPackage files={files} paperTitle={paperTitle} />
           </div>
         )}
 
         {/* New Run button after completion */}
         {currentStage === "complete" && (
-          <div className="mt-8 flex justify-center animate-fade-in">
+          <div className="mt-8 flex justify-center panel-enter">
             <button
               type="button"
-              onClick={() => {
-                setUrl("");
-                setCurrentStage("idle");
-                setStatusMessage("");
-                setError(null);
-                setPaperTitle("");
-                setPaperAuthors([]);
-                setPaperAbstract("");
-                setExtraction(null);
-                setPlan(null);
-                setFiles([]);
-                setValidation([]);
-                setCompletedStages(new Set());
-                setElapsed(0);
-              }}
-              className="transition-colors"
+              onClick={resetState}
               style={{
                 backgroundColor: "transparent",
                 color: "#C8432B",

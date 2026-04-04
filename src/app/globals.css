@@ -79,3 +79,123 @@ html {
 .animate-fade-in {
   animation: fadeInUp 0.4s ease-out;
 }
+
+/* Staggered entrance for landing page */
+@keyframes fadeInUpStagger {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-1 { animation: fadeInUpStagger 0.6s ease-out 0.1s both; }
+.stagger-2 { animation: fadeInUpStagger 0.6s ease-out 0.25s both; }
+.stagger-3 { animation: fadeInUpStagger 0.6s ease-out 0.4s both; }
+.stagger-4 { animation: fadeInUpStagger 0.6s ease-out 0.55s both; }
+
+/* Checkmark draw animation */
+@keyframes drawCheck {
+  from {
+    stroke-dashoffset: 20;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-check path {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  animation: drawCheck 0.4s ease-out 0.15s forwards;
+}
+
+/* Scale pop for badges/pills */
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  70% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-pop {
+  animation: popIn 0.35s ease-out forwards;
+}
+
+/* Subtle pulse ring for active stage */
+@keyframes pulseRing {
+  0% {
+    box-shadow: 0 0 0 0 rgba(200, 67, 43, 0.3);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(200, 67, 43, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(200, 67, 43, 0);
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulseRing 2s ease-out infinite;
+}
+
+/* Success glow for completion */
+@keyframes successGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(45, 106, 79, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px 4px rgba(45, 106, 79, 0.15);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(45, 106, 79, 0);
+  }
+}
+
+.animate-success-glow {
+  animation: successGlow 1.5s ease-out;
+}
+
+/* Button press micro-interaction */
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+button {
+  transition: transform 0.1s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Smooth panel transitions */
+.panel-enter {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* Type cursor blink for active processing */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* Counter number roll */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-count {
+  animation: countUp 0.4s ease-out;
+}

@@ -13,46 +13,82 @@ export function CodeViewer({ files }: Props) {
   if (files.length === 0) return null;
 
   const activeFile = files[activeTab] ?? files[0];
+  const lineCount = activeFile.content.split("\n").length;
 
   return (
     <div className="rounded-[6px] border border-[#D5CEC5] overflow-hidden">
       {/* Label */}
-      <div
-        className="px-4 py-2 flex items-center justify-between bg-[#F2EDE7] border-b border-[#D5CEC5]"
-      >
+      <div className="px-4 py-2 flex items-center justify-between bg-[#F2EDE7] border-b border-[#D5CEC5]">
         <span
           className="font-semibold text-[0.75rem] tracking-wider uppercase text-[#C8432B]"
           style={{ fontFamily: "var(--font-sans)" }}
         >
           Generated Code
         </span>
+        <span
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.7rem",
+            color: "#9B9498",
+          }}
+        >
+          {files.length} files · {lineCount} lines
+        </span>
       </div>
 
-      {/* Tabs */}
-      <div className="flex bg-[#252536] border-b border-[#383850]">
-        {files.map((file, i) => (
-          <button
-            key={file.filename}
-            onClick={() => setActiveTab(i)}
-            className="px-4 py-2 transition-colors border-none cursor-pointer"
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "0.8rem",
-              color: i === activeTab ? "#CDD6F4" : "#585B70",
-              backgroundColor: i === activeTab ? "#1E1E2E" : "transparent",
-              borderBottom:
-                i === activeTab
-                  ? "2px solid #C8432B"
-                  : "2px solid transparent",
-            }}
-          >
-            {file.filename}
-          </button>
-        ))}
+      {/* Tabs with window chrome */}
+      <div className="flex items-center bg-[#252536] border-b border-[#383850]">
+        <div className="flex items-center gap-1.5 pl-4 pr-3">
+          <div
+            className="rounded-full"
+            style={{ width: "8px", height: "8px", backgroundColor: "#F38BA8", opacity: 0.5 }}
+          />
+          <div
+            className="rounded-full"
+            style={{ width: "8px", height: "8px", backgroundColor: "#F9E2AF", opacity: 0.5 }}
+          />
+          <div
+            className="rounded-full"
+            style={{ width: "8px", height: "8px", backgroundColor: "#A6E3A1", opacity: 0.5 }}
+          />
+        </div>
+        <div className="flex">
+          {files.map((file, i) => (
+            <button
+              key={file.filename}
+              onClick={() => setActiveTab(i)}
+              className="px-4 py-2.5 border-none cursor-pointer relative"
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.8rem",
+                color: i === activeTab ? "#CDD6F4" : "#585B70",
+                backgroundColor: i === activeTab ? "#1E1E2E" : "transparent",
+                transition: "color 0.2s ease, background-color 0.2s ease",
+              }}
+            >
+              {file.filename}
+              {i === activeTab && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: "2px",
+                    backgroundColor: "#C8432B",
+                  }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Code Content */}
-      <div className="overflow-auto bg-[#1E1E2E]" style={{ maxHeight: "480px" }}>
+      <div
+        className="overflow-auto bg-[#1E1E2E]"
+        style={{ maxHeight: "480px" }}
+      >
         <pre className="p-4">
           <code
             style={{
@@ -74,10 +110,13 @@ export function CodeViewer({ files }: Props) {
                   <span
                     className="block w-full px-1"
                     style={{
-                      backgroundColor: hasPaperRef ? "#2A2A3E" : "transparent",
+                      backgroundColor: hasPaperRef
+                        ? "#2A2A3E"
+                        : "transparent",
                       borderLeft: hasPaperRef
                         ? "2px solid #C8432B"
                         : "2px solid transparent",
+                      transition: "background-color 0.15s ease",
                     }}
                   >
                     {highlightPython(line)}
@@ -102,7 +141,9 @@ function isPaperReference(line: string): boolean {
     lower.includes("eq.") ||
     lower.includes("sec.") ||
     (lower.includes("paper") &&
-      (lower.includes("#") || lower.includes('"""') || lower.includes("'''")))
+      (lower.includes("#") ||
+        lower.includes('"""') ||
+        lower.includes("'''")))
   );
 }
 
@@ -155,7 +196,9 @@ function highlightPython(line: string): ReactNode {
     trimmed.endsWith("'''")
   ) {
     if (isPaperReference(line)) {
-      return <span style={{ color: C.paperRef, fontStyle: "italic" }}>{line}</span>;
+      return (
+        <span style={{ color: C.paperRef, fontStyle: "italic" }}>{line}</span>
+      );
     }
     return <span style={{ color: C.string }}>{line}</span>;
   }
@@ -173,7 +216,9 @@ function highlightPython(line: string): ReactNode {
     trimmed.match(/[.:)]$/)
   ) {
     if (isPaperReference(line)) {
-      return <span style={{ color: C.paperRef, fontStyle: "italic" }}>{line}</span>;
+      return (
+        <span style={{ color: C.paperRef, fontStyle: "italic" }}>{line}</span>
+      );
     }
   }
 
@@ -183,17 +228,71 @@ function highlightPython(line: string): ReactNode {
   let key = 0;
 
   const KEYWORDS = new Set([
-    "def", "class", "return", "if", "elif", "else", "for", "while", "in",
-    "not", "and", "or", "is", "import", "from", "as", "with", "try",
-    "except", "finally", "raise", "yield", "lambda", "pass", "break",
-    "continue", "True", "False", "None", "assert", "global", "nonlocal",
+    "def",
+    "class",
+    "return",
+    "if",
+    "elif",
+    "else",
+    "for",
+    "while",
+    "in",
+    "not",
+    "and",
+    "or",
+    "is",
+    "import",
+    "from",
+    "as",
+    "with",
+    "try",
+    "except",
+    "finally",
+    "raise",
+    "yield",
+    "lambda",
+    "pass",
+    "break",
+    "continue",
+    "True",
+    "False",
+    "None",
+    "assert",
+    "global",
+    "nonlocal",
   ]);
 
   const BUILTINS = new Set([
-    "print", "len", "range", "int", "float", "str", "list", "dict", "set",
-    "tuple", "type", "isinstance", "enumerate", "zip", "map", "filter",
-    "sum", "min", "max", "abs", "sorted", "reversed", "any", "all",
-    "super", "self", "np", "pd", "torch", "sklearn",
+    "print",
+    "len",
+    "range",
+    "int",
+    "float",
+    "str",
+    "list",
+    "dict",
+    "set",
+    "tuple",
+    "type",
+    "isinstance",
+    "enumerate",
+    "zip",
+    "map",
+    "filter",
+    "sum",
+    "min",
+    "max",
+    "abs",
+    "sorted",
+    "reversed",
+    "any",
+    "all",
+    "super",
+    "self",
+    "np",
+    "pd",
+    "torch",
+    "sklearn",
   ]);
 
   while (remaining.length > 0) {
@@ -237,7 +336,10 @@ function highlightPython(line: string): ReactNode {
     const numMatch = remaining.match(
       /^(\d+\.?\d*([eE][+-]?\d+)?|0[xX][0-9a-fA-F]+)/
     );
-    if (numMatch && (key === 0 || !/\w$/.test(String(tokens[tokens.length - 1])))) {
+    if (
+      numMatch &&
+      (key === 0 || !/\w$/.test(String(tokens[tokens.length - 1])))
+    ) {
       tokens.push(
         <span key={key++} style={{ color: C.number }}>
           {numMatch[0]}
@@ -255,7 +357,8 @@ function highlightPython(line: string): ReactNode {
       if (KEYWORDS.has(word)) color = C.keyword;
       else if (BUILTINS.has(word)) color = C.builtin;
       // Function call: word followed by (
-      else if (remaining.slice(word.length).match(/^\s*\(/)) color = C.function;
+      else if (remaining.slice(word.length).match(/^\s*\(/))
+        color = C.function;
 
       tokens.push(
         <span key={key++} style={{ color }}>
